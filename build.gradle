@@ -1,0 +1,70 @@
+apply plugin: 'groovy'
+apply plugin: 'idea'
+apply plugin: 'maven-publish'
+
+ext {
+    jettyVersion = '9.1.0.v20131115'
+}
+
+repositories {
+    mavenCentral()
+}
+
+group = 'org.gradle.plugin'
+version = '1.0'
+
+configurations {
+    provided
+}
+
+sourceSets {
+    main.compileClasspath += configurations.provided
+    test.compileClasspath += configurations.provided
+    test.runtimeClasspath += configurations.provided
+}
+
+idea {
+    module {
+        scopes.PROVIDED.plus += configurations.provided
+    }
+}
+
+dependencies {
+    compile gradleApi()
+    compile localGroovy()
+
+    provided "org.eclipse.jetty:jetty-jndi:${jettyVersion}"
+    provided "org.eclipse.jetty:jetty-annotations:${jettyVersion}"
+
+}
+
+task sourceJar (type : Jar) {
+	classifier = 'sources'
+	from sourceSets.main.allSource
+}
+publishing {
+	publications {
+		mavenJava(MavenPublication) {
+			from components.java
+			artifact (sourceJar) {
+				classifier = 'sources'
+			}
+
+			pom.withXml {
+				def root = asNode()
+				root.appendNode('name', 'Gradle jetty plugin')
+				root.appendNode('description', 'Gradle plugin supporting deployment of your web application to an jetty web container.')
+				root.appendNode('url', 'https://github.com/dsvdsv/gradle-jetty-plugin')
+			}
+		}
+	}
+	repositories {
+		maven {
+			url "https://rbs-develop.paymentgate.ru/repo/content/repositories/${project.version.endsWith('-SNAPSHOT') ? 'snapshots' : 'releases' }"
+			credentials {
+				username rbsMavenUser
+				password rbsMavenPassword
+			}
+		}
+	}
+}
