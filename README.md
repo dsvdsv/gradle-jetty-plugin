@@ -1,0 +1,1 @@
+gradle-jetty-plugin 1.1 - for jetty 9.0.x
