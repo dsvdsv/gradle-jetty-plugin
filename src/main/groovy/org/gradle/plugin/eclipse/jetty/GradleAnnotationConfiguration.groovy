@@ -1,7 +1,6 @@
 package org.gradle.plugin.eclipse.jetty
 
 import groovy.util.logging.Slf4j
-import org.eclipse.jetty.annotations.AbstractDiscoverableAnnotationHandler
 import org.eclipse.jetty.annotations.AnnotationConfiguration
 import org.eclipse.jetty.annotations.AnnotationParser
 import org.eclipse.jetty.annotations.ClassNameResolver
@@ -30,22 +29,20 @@ class GradleAnnotationConfiguration extends AnnotationConfiguration {
 			if (metaData == null)
 				throw new IllegalStateException('No metadata');
 
-			parser.clearHandlers();
-
-			_discoverableAnnotationHandlers.each {
-				if (it instanceof AbstractDiscoverableAnnotationHandler) {
-					it.setResource(null);
-				}
-			};
-
-			parser.registerHandlers _discoverableAnnotationHandlers;
-			parser.registerHandler _classInheritanceHandler;
-			parser.registerHandlers _containerInitializerAnnotationHandlers;
+//			_discoverableAnnotationHandlers.each {
+//				if (it instanceof AbstractDiscoverableAnnotationHandler) {
+//					it.setResource(null);
+//				}
+//			};
+			Set<AnnotationParser.Handler> handlers = new HashSet<AnnotationParser.Handler>();
+			handlers.addAll(_discoverableAnnotationHandlers);
+			handlers.add(_classInheritanceHandler);
+			handlers.addAll(_containerInitializerAnnotationHandlers);
 
 			for (it in jwac.classPathFiles) {
 				//scan the equivalent of the WEB-INF/classes directory that has been synthesised by the plugin
 				if (it.isDirectory() && it.exists()) {
-					doParse(context, parser, Resource.newResource(it.toURI()));
+					doParse(handlers, context, parser, Resource.newResource(it.toURI()));
 				}
 			};
 
@@ -54,15 +51,15 @@ class GradleAnnotationConfiguration extends AnnotationConfiguration {
 			if (context.webInf != null && context.webInf.exists()) {
 				Resource classesDir = context.webInf.addPath('classes/');
 				if (classesDir.exists()) {
-					doParse(context, parser, classesDir);
+					doParse(handlers, context, parser, classesDir);
 				}
 			}
 		}
 	}
 
-	def doParse(final def context, final def parser, def resource) {
-		parser.parseDir resource, [
-				isExcluded: { String name ->
+	def doParse(final def handlers, final def context, final AnnotationParser parser, def resource) {
+		parser.parseDir(handlers, resource, [
+				isExcluded    : { String name ->
 					if (context.isSystemClass(name)) return true;
 					if (context.isServerClass(name)) return false;
 					return false;
@@ -73,6 +70,6 @@ class GradleAnnotationConfiguration extends AnnotationConfiguration {
 						return false;
 					return true;
 				}
-		] as ClassNameResolver;
+		] as ClassNameResolver);
 	}
 }
