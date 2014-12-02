@@ -45,6 +45,9 @@ abstract class AbstractJettyTask extends ConventionTask {
 	Integer httpPort;
 	def loginServices
 	def requestLog;
+	@InputFiles
+	@Optional
+	Iterable<File> extraResourceBases
 
 	protected Scanner scanner;
 	protected ArrayList<File> scanList;
@@ -162,6 +165,9 @@ abstract class AbstractJettyTask extends ConventionTask {
 		if (getJettyEnvXml() != null) {
 			webAppConfig.setJettyEnvXmlFile(getJettyEnvXml());
 		}
+		if (getExtraResourceBases()!= null) {
+			webAppConfig.setExtraResourceBases getExtraResourceBases().collect({ fileToString(it) });
+		}
 		Set<String> systemClasses = new LinkedHashSet<String>(Arrays.asList(webAppConfig.getSystemClasses()));
 		systemClasses.remove('org.apache.commons.logging.');
 		systemClasses.remove('org.apache.log4j.');
@@ -200,5 +206,9 @@ abstract class AbstractJettyTask extends ConventionTask {
 		log.info 'Starting jetty....';
 
 		webAppConfig.start();
+	}
+
+	protected static fileToString(file) {
+		file instanceof File ? file.absolutePath : file.toString()
 	}
 }

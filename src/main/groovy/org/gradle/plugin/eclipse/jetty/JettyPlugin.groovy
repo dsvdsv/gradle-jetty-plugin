@@ -55,6 +55,7 @@ public class JettyPlugin implements Plugin<Project> {
 			jettyTask.conventionMapping.map('stopKey') { convention.stopKey }
 			jettyTask.conventionMapping.map('httpPort') { convention.httpPort }
 			jettyTask.conventionMapping.map('jettyEnvXml') { convention.jettyEnvXml }
+			jettyTask.conventionMapping.map('extraResourceBases') { convention.extraResourceBases }
 			jettyTask.conventionMapping.map('contextPath') { project.tasks.getByName(WarPlugin.WAR_TASK_NAME).baseName }
 		}
 	}
@@ -99,4 +100,6 @@ public class JettyPlugin implements Plugin<Project> {
 	JavaPluginConvention getJavaConvention(Project project) {
 		project.convention.getPlugin(JavaPluginConvention)
 	}
+
+
 }

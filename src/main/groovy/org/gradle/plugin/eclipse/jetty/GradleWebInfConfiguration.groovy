@@ -2,6 +2,7 @@ package org.gradle.plugin.eclipse.jetty
 
 import groovy.util.logging.Slf4j
 import org.eclipse.jetty.util.resource.Resource
+import org.eclipse.jetty.util.resource.ResourceCollection
 import org.eclipse.jetty.webapp.WebAppClassLoader
 import org.eclipse.jetty.webapp.WebAppContext
 import org.eclipse.jetty.webapp.WebInfConfiguration
@@ -12,6 +13,17 @@ import org.eclipse.jetty.webapp.WebInfConfiguration
  */
 @Slf4j
 class GradleWebInfConfiguration extends WebInfConfiguration {
+
+	private Iterable<File> extraResourceBases
+	private final List baseResourceListeners = []
+
+	void addBaseResourceListener(Closure closure) {
+		baseResourceListeners.add(closure)
+	}
+
+	void setExtraResourceBases(Iterable<File> extraResourceBases) {
+		this.extraResourceBases = extraResourceBases
+	}
 
 	@Override
 	public void configure(WebAppContext context) throws Exception {
@@ -28,7 +40,7 @@ class GradleWebInfConfiguration extends WebInfConfiguration {
 
 	@Override
 	protected List<Resource> findJars(WebAppContext context)
-	throws Exception {
+			throws Exception {
 		List<Resource> list = new ArrayList<Resource>();
 		JettyWebAppContext jwac = context as JettyWebAppContext;
 		if (jwac.getClassPathFiles() != null) {
@@ -48,5 +60,23 @@ class GradleWebInfConfiguration extends WebInfConfiguration {
 		if (superList != null)
 			list.addAll(superList);
 		return list;
+	}
+
+	@Override
+	public void unpack(WebAppContext context) throws IOException {
+		super.unpack(context)
+		if (extraResourceBases) {
+			Resource res = context.getBaseResource()
+			List resources = []
+			if (res instanceof ResourceCollection)
+				resources.addAll(res.getResources())
+			else
+				resources.add(res)
+			for (def e in extraResourceBases)
+				resources.add(Resource.newResource(e))
+			context.setBaseResource(new ResourceCollection(resources as Resource[]))
+		}
+		for (Closure closure in baseResourceListeners)
+			closure(context)
 	}
 }

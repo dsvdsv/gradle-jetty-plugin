@@ -30,13 +30,14 @@ class JettyWebAppContext extends WebAppContext {
 	String webInfIncludeJarPattern;
 	final Set<File> webInfClasses = new HashSet<File>();
 	final Set<File> webInfJars = new HashSet<File>();
+	List<String> extraResourceBases;
 
 	final EnvConfiguration envConfig;
-
+	final GradleWebInfConfiguration webInfConfiguration;
 	public JettyWebAppContext() {
 		super();
 		configurations = [
-				new GradleWebInfConfiguration(),
+				webInfConfiguration = new GradleWebInfConfiguration(),
 				new WebXmlConfiguration(),
 				new MetaInfConfiguration(),
 				new FragmentConfiguration(),
@@ -86,6 +87,9 @@ class JettyWebAppContext extends WebAppContext {
 			envConfig.setJettyEnvXml(jettyEnvXmlFile.toURI().toURL());
 		}
 
+		if(extraResourceBases!=null && !extraResourceBases.empty) {
+			webInfConfiguration.setExtraResourceBases(extraResourceBases)
+		}
 		// CHECK setShutdown(false);
 		super.doStart();
 	}
