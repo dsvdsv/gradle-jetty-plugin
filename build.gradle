@@ -40,8 +40,20 @@ dependencies {
 	compile "org.eclipse.jetty.websocket:websocket-server:${jettyVersion}"
 	compile "org.eclipse.jetty:jetty-jsp:${jettyVersion}"
 
+	testCompile 'org.testng:testng:6.8.+'
+	testCompile 'org.mockito:mockito-all:1.9.+'
 }
 
+test {
+	useTestNG()
+
+	testLogging.showStandardStreams = true
+
+	// listen to events in the test execution lifecycle
+	beforeTest { descriptor ->
+		logger.lifecycle("Running test: " + descriptor)
+	}
+}
 
 task sourceJar (type : Jar) {
 	classifier = 'sources'
