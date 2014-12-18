@@ -18,19 +18,21 @@ public class JettyPlugin implements Plugin<Project> {
 
 	@Override
 	void apply(Project project) {
-		project.plugins.apply(WarPlugin);
+		//project.plugins.apply(WarPlugin);
 
-		project.configurations.create(CONFIGURATION_NAME).setVisible(false).setTransitive(true)
-				.setDescription('The Jetty libraries to be used for this project.');
+		if(project.plugins.findPlugin(org.gradle.api.plugins.WarPlugin)) {
+			project.configurations.create(CONFIGURATION_NAME).setVisible(false).setTransitive(true)
+					.setDescription('The Jetty libraries to be used for this project.');
 
-		JettyPluginConvention convention = new JettyPluginConvention();
+			JettyPluginConvention convention = new JettyPluginConvention();
 
-		project.convention.plugins.eclipseJetty = convention;
+			project.convention.plugins.eclipseJetty = convention;
 
-		configureMappingRules(project, convention);
-		configureJettyStop(project, convention);
-		configureJettyRun(project, convention);
-		configureJettyRunWar(project, convention);
+			configureMappingRules(project, convention);
+			configureJettyStop(project, convention);
+			configureJettyRun(project, convention);
+			configureJettyRunWar(project, convention);
+		}
 	}
 
 	void configureJettyRunWar(Project project, JettyPluginConvention jettyPluginConvention) {
