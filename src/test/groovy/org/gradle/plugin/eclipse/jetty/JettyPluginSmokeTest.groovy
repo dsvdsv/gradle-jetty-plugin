@@ -1,6 +1,7 @@
 package org.gradle.plugin.eclipse.jetty
 
 import org.gradle.api.Project
+import org.gradle.api.plugins.WarPlugin
 import org.gradle.plugin.test.TestUtil
 import org.testng.Assert
 import org.testng.annotations.BeforeClass
@@ -13,7 +14,7 @@ import org.testng.annotations.Test
  * User: Dikansky
  * Date: 10.12.2014
  */
-class JettyPluginTest {
+class JettyPluginSmokeTest {
 	private Project project // = TestUtil.createRootProject()
 	private JettyPlugin jettyPlugin
 
@@ -25,6 +26,7 @@ class JettyPluginTest {
 
 	@Test
 	public void testAppliesJavaPluginAndAddsConvention() {
+		project.plugins.apply(WarPlugin)
 		jettyPlugin.apply(project)
 
 		Assert.assertEquals(project.convention.plugins.eclipseJetty.class, JettyPluginConvention)
@@ -34,12 +36,12 @@ class JettyPluginTest {
 	}
 
 	@Test
-	public void testJettyRunConfigureWebApplication() {
+	public void testAppliesJavaPluginWithoutWarAndAddsConvention() {
 		jettyPlugin.apply(project)
 
-		def jettyRun = project.getTasks().findByName('jettyRun')
-		jettyRun.configureWebApplication()
-
-		Assert.assertNotNull(jettyRun);
+		Assert.assertNull(project.convention.plugins.eclipseJetty)
+		Assert.assertNull(project.getTasks().findByName('jettyRun'))
+		Assert.assertNull(project.getTasks().findByName('jettyRunWar'))
+		Assert.assertNull(project.getTasks().findByName('jettyStop'))
 	}
 }

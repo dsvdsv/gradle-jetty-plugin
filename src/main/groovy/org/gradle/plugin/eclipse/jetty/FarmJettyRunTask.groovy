@@ -3,71 +3,56 @@ package org.gradle.plugin.eclipse.jetty
 import groovy.util.logging.Slf4j
 import org.apache.tools.ant.AntClassLoader
 import org.gradle.api.GradleException
+import org.gradle.api.Project
 import org.gradle.api.UncheckedIOException
 import org.gradle.api.file.FileCollection
 import org.gradle.api.internal.ConventionTask
-import org.gradle.api.tasks.InputFile
-import org.gradle.api.tasks.InputFiles
-import org.gradle.api.tasks.Optional
+import org.gradle.api.plugins.WarPlugin
 import org.gradle.api.tasks.TaskAction
 import org.gradle.logging.ProgressLogger
 import org.gradle.logging.ProgressLoggerFactory
 
 /**
- * User: dsv
- * Date: 25.08.13
- * Time: 19:48
+ * User: Dikansky
+ * Date: 19.12.2014
  */
 @Slf4j
-abstract class AbstractJettyTask extends BaseJettyTask {
-	@InputFiles
-	Iterable<File> additionalRuntimeJars = new ArrayList<File>();
-	JettyServer server;
-	JettyWebAppContext webAppConfig;
-	String contextPath;
-	@InputFile
-	@Optional
-	File jettyEnvXml;
-	@InputFile
-	@Optional
-	File webDefaultXml;
-	@InputFile
-	@Optional
-	File overrideWebXml;
-	int scanIntervalSeconds;
-	boolean reloadable;
-	File jettyConfig;
+class FarmJettyRunTask extends ConventionTask {
 	Integer stopPort;
 	String stopKey;
 	boolean daemon;
 	Integer httpPort;
-	FileCollection buildscriptClasspath;
-	FileCollection jettyClasspath;
-	def loginServices
-	def requestLog;
-	@InputFiles
-	@Optional
-	Iterable<File> extraResourceBases
+	boolean reloadable;
 
-	protected Scanner scanner;
-	protected ArrayList<File> scanList;
+	JettyServer server;
 	protected Thread consoleScanner;
 
+	FileCollection buildscriptClasspath;
+	FileCollection jettyClasspath;
 
-	static final String PORT_SYSPROPERTY = "jetty.port";
-
-	public abstract void validateConfiguration();
+	List<JettyWebAppContext> collectWebAppContexts() {
+		List<JettyWebAppContext> result = new ArrayList<>();
+		project.childProjects.each {String name, Project p ->
+			if (p.plugins.hasPlugin(WarPlugin) && p.plugins.hasPlugin(JettyPlugin))  {
+				JettyRunTask jettyRunTask = p.tasks.jettyRun;
+				jettyRunTask.validateConfiguration();
+				jettyRunTask.configureWebApplication();
+				result.add(jettyRunTask.webAppConfig)
+			}
+		}
+		return result;
+	}
 
 	@TaskAction
-	protected void start() {
+	void start() {
 		logger.info("Configuring Jetty for " + getProject());
 		ClassLoader originClassLoader = getClass().classLoader;
 		URLClassLoader jettyClassLoader = createJettyClassLoader();
 
 		try {
 			Thread.currentThread().contextClassLoader = jettyClassLoader;
-			validateConfiguration();
-			startJettyInternal();
+			List<JettyWebAppContext> contexts = collectWebAppContexts();
+			startJettyInternal(contexts);
 		}
 		finally {
 			Thread.currentThread().contextClassLoader = originClassLoader;
@@ -95,7 +80,7 @@ abstract class AbstractJettyTask extends BaseJettyTask {
 		urls.toArray(new URL[urls.size()]);
 	}
 
-	def startJettyInternal() {
+	void startJettyInternal(List<JettyWebAppContext> contexts) {
 		ProgressLoggerFactory progressLoggerFactory = getServices().get(ProgressLoggerFactory.class);
 		ProgressLogger progressLogger = progressLoggerFactory.newOperation(AbstractJettyTask.class);
 		progressLogger.setDescription("Start Jetty server");
@@ -109,8 +94,7 @@ abstract class AbstractJettyTask extends BaseJettyTask {
 
 			//set up the webapp and any context provided
 			server.configureHandlers();
-			configureWebApplication();
-			server.addWebApplication(webAppConfig);
+			contexts.each {x-> server.addWebApplication(x)}
 
 			//do any other configuration required by the
 			//particular Jetty version
@@ -133,10 +117,11 @@ abstract class AbstractJettyTask extends BaseJettyTask {
 		} finally {
 			progressLogger.completed();
 		}
-
+		def contextPaths = '';
+		contexts.each {x->contextPaths+ ' ' + x.getContextPath()}
 		progressLogger = progressLoggerFactory.newOperation(this.getClass());
-		progressLogger.setDescription(String.format("Run Jetty at http://localhost:%d/%s", getHttpPort(), getContextPath()));
-		progressLogger.setShortDescription(String.format("Running at http://localhost:%d/%s", getHttpPort(), getContextPath()));
+		progressLogger.setDescription(String.format("Run Jetty at http://localhost:%d/%s", getHttpPort(), contextPaths));
+		progressLogger.setShortDescription(String.format("Running at http://localhost:%d/%s", getHttpPort(), contextPaths));
 		progressLogger.started();
 		try {
 			// keep the thread going if not in daemon mode
@@ -146,39 +131,6 @@ abstract class AbstractJettyTask extends BaseJettyTask {
 		} finally {
 			progressLogger.completed();
 		}
-	}
-
-	void configureWebApplication() {
-		if (webAppConfig == null) {
-			webAppConfig = new JettyWebAppContext();
-		}
-		webAppConfig.setContextPath(getContextPath().startsWith("/") ? getContextPath() : "/" + getContextPath());
-		if (getTemporaryDir() != null) {
-			webAppConfig.setTempDirectory(getTemporaryDir());
-		}
-		if (getWebDefaultXml() != null) {
-			webAppConfig.setDefaultsDescriptor(getWebDefaultXml().getCanonicalPath());
-		}
-		if (getOverrideWebXml() != null) {
-			webAppConfig.setOverrideDescriptor(getOverrideWebXml().getCanonicalPath());
-		}
-		if (getJettyEnvXml() != null) {
-			webAppConfig.setJettyEnvXmlFile(getJettyEnvXml());
-		}
-		if (getExtraResourceBases()!= null) {
-			webAppConfig.setExtraResourceBases getExtraResourceBases().collect({ fileToString(it) });
-		}
-		Set<String> systemClasses = new LinkedHashSet<String>(Arrays.asList(webAppConfig.getSystemClasses()));
-		systemClasses.remove('org.apache.commons.logging.');
-		systemClasses.remove('org.apache.log4j.');
-		webAppConfig.setSystemClasses(systemClasses.toArray(new String[systemClasses.size()]));
-
-		webAppConfig.setParentLoaderPriority(false);
-
-		logger.info "Context path = ${webAppConfig.getContextPath()}"
-		logger.info 'Tmp directory =  determined at runtime'
-		logger.info "Web defaults = " + (webAppConfig.getDefaultsDescriptor() == null ? " jetty default" : webAppConfig.getDefaultsDescriptor());
-		logger.info "Web overrides = " + (webAppConfig.getOverrideDescriptor() == null ? " none" : webAppConfig.getOverrideDescriptor());
 	}
 
 	def createServer() {
@@ -208,7 +160,4 @@ abstract class AbstractJettyTask extends BaseJettyTask {
 		webAppConfig.start();
 	}
 
-	protected static fileToString(file) {
-		file instanceof File ? file.absolutePath : file.toString()
-	}
 }

@@ -15,30 +15,59 @@ public class JettyPlugin implements Plugin<Project> {
 	public static final String JETTY_RUN = 'jettyRun';
 	public static final String JETTY_RUN_WAR = 'jettyRunWar';
 	public static final String JETTY_STOP = 'jettyStop';
+	public static final String FARM_JETTY_RUN = 'farmJettyRun';
+	public static final String FARM_JETTY_STOP = 'farmJettyStop'
 
 	@Override
 	void apply(Project project) {
-		//project.plugins.apply(WarPlugin);
+		project.configurations.create(CONFIGURATION_NAME).setVisible(false).setTransitive(true)
+				.setDescription('The Jetty libraries to be used for this project.');
 
 		if(project.plugins.findPlugin(org.gradle.api.plugins.WarPlugin)) {
-			project.configurations.create(CONFIGURATION_NAME).setVisible(false).setTransitive(true)
-					.setDescription('The Jetty libraries to be used for this project.');
-
 			JettyPluginConvention convention = new JettyPluginConvention();
 
 			project.convention.plugins.eclipseJetty = convention;
-
 			configureMappingRules(project, convention);
 			configureJettyStop(project, convention);
 			configureJettyRun(project, convention);
 			configureJettyRunWar(project, convention);
+		} else {
+			FarmJettyPluginConvention convention = new FarmJettyPluginConvention();
+			project.convention.plugins.farmJetty = convention;
+			configureFarmJettyRun(project, convention);
+			configureFarmJettyStop(project, convention);
 		}
 	}
 
+	void configureFarmJettyRun(Project project, final FarmJettyPluginConvention convention) {
+		project.tasks.withType(FarmJettyRunTask).whenTaskAdded { FarmJettyRunTask task ->
+			task.dependsOn(JavaPlugin.CLASSES_TASK_NAME)
+			task.logging.level = LogLevel.INFO;
+			task.daemon = false
+			task.reloadable = true
+			task.conventionMapping.map('stopPort') { convention.stopPort }
+			task.conventionMapping.map('stopKey') { convention.stopKey }
+			task.conventionMapping.map('httpPort') { convention.httpPort }
+			task.conventionMapping.map('buildscriptClasspath') { project.buildscript.configurations.getByName('classpath').asFileTree }
+			task.conventionMapping.map('jettyClasspath') { project.configurations.getByName(CONFIGURATION_NAME).asFileTree }
+		}
+		FarmJettyRunTask farmJettyRun = project.tasks.create(FARM_JETTY_RUN, FarmJettyRunTask);
+		farmJettyRun.description = 'Run Jetty.'
+
+	}
+
+	void configureFarmJettyStop(Project project, final FarmJettyPluginConvention convention) {
+		FarmJettyStopTask farmJettyStop = project.tasks.create(FARM_JETTY_STOP, FarmJettyStopTask);
+		farmJettyStop.description = 'Stops Jetty.';
+
+		farmJettyStop.conventionMapping.map('stopPort') { convention.stopPort }
+		farmJettyStop.conventionMapping.map('stopKey') { convention.stopKey }
+	}
+
 	void configureJettyRunWar(Project project, JettyPluginConvention jettyPluginConvention) {
-		project.tasks.withType(JettyRunWarTask).whenTaskAdded { JettyRunWarTask tomcatRunWar ->
-			tomcatRunWar.dependsOn(WarPlugin.WAR_TASK_NAME)
-			tomcatRunWar.conventionMapping.map('webApp') { project.tasks.getByName(WarPlugin.WAR_TASK_NAME).archivePath }
+		project.tasks.withType(JettyRunWarTask).whenTaskAdded { JettyRunWarTask jettyRunWar ->
+			jettyRunWar.dependsOn(WarPlugin.WAR_TASK_NAME)
+			jettyRunWar.conventionMapping.map('webApp') { project.tasks.getByName(WarPlugin.WAR_TASK_NAME).archivePath }
 		}
 
 		JettyRunWarTask jettyRunWar = project.tasks.create(JETTY_RUN_WAR, JettyRunWarTask)

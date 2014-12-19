@@ -7,10 +7,7 @@ import org.gradle.api.file.FileCollection
  * Date: 08.09.13
  * Time: 1:12
  */
-class JettyPluginConvention {
-	Integer stopPort = 8081;
-	String stopKey = 'stop';
-	Integer httpPort = 8080;
+class JettyPluginConvention extends FarmJettyPluginConvention {
 	File jettyEnvXml;
 	Iterable<File> extraResourceBases;
 }

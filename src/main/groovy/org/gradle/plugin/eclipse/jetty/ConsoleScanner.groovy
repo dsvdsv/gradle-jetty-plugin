@@ -10,9 +10,9 @@ import groovy.util.logging.Slf4j
 @Slf4j
 class ConsoleScanner extends Thread {
 
-	final AbstractJettyTask task;
+	final def task;
 
-	public ConsoleScanner(AbstractJettyTask task) {
+	public ConsoleScanner(def task) {
 		this.task = task;
 		name = "Console scanner";
 		daemon = true;
