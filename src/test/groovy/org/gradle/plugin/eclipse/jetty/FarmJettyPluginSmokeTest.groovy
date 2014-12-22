@@ -17,21 +17,30 @@ class FarmJettyPluginSmokeTest {
 	private Project root
 	private Project childWs;
 	private Project childSite;
+	private Project child;
+	private Project childChildSite;
 
 	TestFile childWsDir;
 	TestFile childSiteDir;
+	TestFile childChildSiteDir;
 
 	@BeforeMethod
 	public void setUp() {
 		childWsDir = TestNameTestDirectoryProvider.newInstance().testDirectory;
 		childSiteDir = TestNameTestDirectoryProvider.newInstance().testDirectory;
+		childChildSiteDir = TestNameTestDirectoryProvider.newInstance().testDirectory;
 
 		root = TestUtil.createRootProject();
 		childWs = TestUtil.createChildProject(root, 'ws', childWsDir);
 		childSite = TestUtil.createChildProject(root, 'site', childSiteDir);
+		child = TestUtil.createChildProject(root, 'child');
+		childChildSite = TestUtil.createChildProject(child, 'childSite', childChildSiteDir);
 
 		childWs.plugins.apply(WarPlugin)
 		childWs.plugins.apply(JettyPlugin)
+
+		childChildSite.plugins.apply(WarPlugin)
+		childChildSite.plugins.apply(JettyPlugin)
 
 		childSite.plugins.apply(WarPlugin)
 		childSite.plugins.apply(JettyPlugin)
@@ -40,6 +49,7 @@ class FarmJettyPluginSmokeTest {
 
 		childSiteDir.file("src/main/webapp").createDir()
 		childWsDir.file("src/main/webapp").createDir()
+		childChildSiteDir.file("src/main/webapp").createDir()
 	}
 
 	@Test
@@ -68,8 +78,9 @@ class FarmJettyPluginSmokeTest {
 		def webAppsContexts = farmJettyRunTask.collectWebAppContexts()
 
 		Assert.assertNotNull(webAppsContexts)
-		Assert.assertEquals(webAppsContexts.size(), 2)
+		Assert.assertEquals(webAppsContexts.size(), 3)
 		Assert.assertNotNull webAppsContexts.find { x -> x.contextPath == '/site' }
 		Assert.assertNotNull webAppsContexts.find { x -> x.contextPath == '/ws' }
+		Assert.assertNotNull webAppsContexts.find { x -> x.contextPath == '/childSite' }
 	}
 }

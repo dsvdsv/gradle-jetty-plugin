@@ -41,7 +41,16 @@ public class JettyPlugin implements Plugin<Project> {
 
 	void configureFarmJettyRun(Project project, final FarmJettyPluginConvention convention) {
 		project.tasks.withType(FarmJettyRunTask).whenTaskAdded { FarmJettyRunTask task ->
-			task.dependsOn(JavaPlugin.CLASSES_TASK_NAME)
+
+			def subprojects  = Utils.projects(project);
+			subprojects.each {p->
+				p.afterEvaluate {subprojects.each {p1->
+					if (Utils.isWebApp(p1)) {
+						task.dependsOn p1.tasks.classes
+					}
+				}}
+			}
+
 			task.logging.level = LogLevel.INFO;
 			task.daemon = false
 			task.reloadable = true
@@ -53,7 +62,6 @@ public class JettyPlugin implements Plugin<Project> {
 		}
 		FarmJettyRunTask farmJettyRun = project.tasks.create(FARM_JETTY_RUN, FarmJettyRunTask);
 		farmJettyRun.description = 'Run Jetty.'
-
 	}
 
 	void configureFarmJettyStop(Project project, final FarmJettyPluginConvention convention) {

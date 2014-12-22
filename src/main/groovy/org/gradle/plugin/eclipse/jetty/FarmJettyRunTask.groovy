@@ -31,8 +31,13 @@ class FarmJettyRunTask extends ConventionTask {
 	FileCollection jettyClasspath;
 
 	List<JettyWebAppContext> collectWebAppContexts() {
+		return collectWebAppContexts(project)
+	}
+
+	List<JettyWebAppContext> collectWebAppContexts(Project prj) {
 		List<JettyWebAppContext> result = new ArrayList<>();
-		project.childProjects.each {String name, Project p ->
+		prj.childProjects.each {String name, Project p ->
+			result.addAll(collectWebAppContexts(p))
 			if (p.plugins.hasPlugin(WarPlugin) && p.plugins.hasPlugin(JettyPlugin))  {
 				JettyRunTask jettyRunTask = p.tasks.jettyRun;
 				jettyRunTask.validateConfiguration();
