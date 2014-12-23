@@ -16,7 +16,7 @@ class JettyRunTask extends AbstractJettyTask {
 	File webXml;
 
 	@Override
-	void validateConfiguration() {
+	protected void validateConfiguration() {
 		if (getWebAppSourceDirectory()) {
 			if (!getWebAppSourceDirectory().exists()) {
 				throw new InvalidUserDataException(

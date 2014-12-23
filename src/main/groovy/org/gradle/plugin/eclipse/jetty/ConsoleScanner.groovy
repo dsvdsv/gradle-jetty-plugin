@@ -10,10 +10,10 @@ import groovy.util.logging.Slf4j
 @Slf4j
 class ConsoleScanner extends Thread {
 
-	final def task;
+	final Closure restart;
 
-	public ConsoleScanner(def task) {
-		this.task = task;
+	public ConsoleScanner(Closure task) {
+		this.restart = task;
 		name = "Console scanner";
 		daemon = true;
 	}
@@ -70,7 +70,7 @@ class ConsoleScanner extends Thread {
 
 	private void restartWebApp() {
 		try {
-			task.restartWebApp(false);
+			restart(false);
 			// Clear input buffer to discard anything entered on the console
 			// while the application was being restarted.
 			clearInputBuffer();

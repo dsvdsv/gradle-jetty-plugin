@@ -1,15 +1,10 @@
 package org.gradle.plugin.eclipse.jetty
 
 import groovy.util.logging.Slf4j
-import org.apache.tools.ant.AntClassLoader
 import org.gradle.api.GradleException
-import org.gradle.api.UncheckedIOException
-import org.gradle.api.file.FileCollection
-import org.gradle.api.internal.ConventionTask
 import org.gradle.api.tasks.InputFile
 import org.gradle.api.tasks.InputFiles
 import org.gradle.api.tasks.Optional
-import org.gradle.api.tasks.TaskAction
 import org.gradle.logging.ProgressLogger
 import org.gradle.logging.ProgressLoggerFactory
 
@@ -22,7 +17,6 @@ import org.gradle.logging.ProgressLoggerFactory
 abstract class AbstractJettyTask extends BaseJettyTask {
 	@InputFiles
 	Iterable<File> additionalRuntimeJars = new ArrayList<File>();
-	JettyServer server;
 	JettyWebAppContext webAppConfig;
 	String contextPath;
 	@InputFile
@@ -35,14 +29,11 @@ abstract class AbstractJettyTask extends BaseJettyTask {
 	@Optional
 	File overrideWebXml;
 	int scanIntervalSeconds;
-	boolean reloadable;
 	File jettyConfig;
 	Integer stopPort;
 	String stopKey;
 	boolean daemon;
 	Integer httpPort;
-	FileCollection buildscriptClasspath;
-	FileCollection jettyClasspath;
 	def loginServices
 	def requestLog;
 	@InputFiles
@@ -51,51 +42,11 @@ abstract class AbstractJettyTask extends BaseJettyTask {
 
 	protected Scanner scanner;
 	protected ArrayList<File> scanList;
-	protected Thread consoleScanner;
-
 
 	static final String PORT_SYSPROPERTY = "jetty.port";
 
-	public abstract void validateConfiguration();
-
-	@TaskAction
-	protected void start() {
-		logger.info("Configuring Jetty for " + getProject());
-		ClassLoader originClassLoader = getClass().classLoader;
-		URLClassLoader jettyClassLoader = createJettyClassLoader();
-
-		try {
-			Thread.currentThread().contextClassLoader = jettyClassLoader;
-			validateConfiguration();
-			startJettyInternal();
-		}
-		finally {
-			Thread.currentThread().contextClassLoader = originClassLoader;
-		}
-	}
-
-	URLClassLoader createJettyClassLoader() {
-		ClassLoader rootClassLoader = new AntClassLoader(getClass().classLoader, false);
-		URLClassLoader pluginClassLoader = new URLClassLoader(toURLArray(getBuildscriptClasspath().files), rootClassLoader);
-		new URLClassLoader(toURLArray(getJettyClasspath().files), pluginClassLoader);
-	}
-
-	private URL[] toURLArray(Collection<File> files) {
-		List<URL> urls = new ArrayList<URL>(files.size())
-
-		for (File file : files) {
-			try {
-				urls.add(file.toURI().toURL())
-			}
-			catch (MalformedURLException e) {
-				throw new UncheckedIOException(e)
-			}
-		}
-
-		urls.toArray(new URL[urls.size()]);
-	}
-
-	def startJettyInternal() {
+	@Override
+	protected void startJettyInternal() {
 		ProgressLoggerFactory progressLoggerFactory = getServices().get(ProgressLoggerFactory.class);
 		ProgressLogger progressLogger = progressLoggerFactory.newOperation(AbstractJettyTask.class);
 		progressLogger.setDescription("Start Jetty server");
@@ -165,7 +116,7 @@ abstract class AbstractJettyTask extends BaseJettyTask {
 		if (getJettyEnvXml() != null) {
 			webAppConfig.setJettyEnvXmlFile(getJettyEnvXml());
 		}
-		if (getExtraResourceBases()!= null) {
+		if (getExtraResourceBases() != null) {
 			webAppConfig.setExtraResourceBases getExtraResourceBases().collect({ fileToString(it) });
 		}
 		Set<String> systemClasses = new LinkedHashSet<String>(Arrays.asList(webAppConfig.getSystemClasses()));
@@ -179,33 +130,6 @@ abstract class AbstractJettyTask extends BaseJettyTask {
 		logger.info 'Tmp directory =  determined at runtime'
 		logger.info "Web defaults = " + (webAppConfig.getDefaultsDescriptor() == null ? " jetty default" : webAppConfig.getDefaultsDescriptor());
 		logger.info "Web overrides = " + (webAppConfig.getOverrideDescriptor() == null ? " none" : webAppConfig.getOverrideDescriptor());
-	}
-
-	def createServer() {
-		JettyFactory.instance.jettyServer
-	}
-
-	/**
-	 * Run a thread that monitors the console input to detect ENTER hits.
-	 */
-	void startConsoleScanner() throws Exception {
-		if (reloadable) {
-			log.info('Console reloading is ENABLED. Hit ENTER on the console to restart the context.');
-			consoleScanner = new ConsoleScanner(this);
-			consoleScanner.start();
-		}
-	}
-
-	void restartWebApp(boolean reconfigureScanner) {
-		log.info 'Restart jetty';
-
-		log.info 'Stopping jetty....';
-		webAppConfig.stop();
-		log.info 'Jetty stopped';
-		validateConfiguration();
-		log.info 'Starting jetty....';
-
-		webAppConfig.start();
 	}
 
 	protected static fileToString(file) {

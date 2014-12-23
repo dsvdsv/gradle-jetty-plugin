@@ -1,14 +1,9 @@
 package org.gradle.plugin.eclipse.jetty
 
 import groovy.util.logging.Slf4j
-import org.apache.tools.ant.AntClassLoader
 import org.gradle.api.GradleException
 import org.gradle.api.Project
-import org.gradle.api.UncheckedIOException
-import org.gradle.api.file.FileCollection
-import org.gradle.api.internal.ConventionTask
 import org.gradle.api.plugins.WarPlugin
-import org.gradle.api.tasks.TaskAction
 import org.gradle.logging.ProgressLogger
 import org.gradle.logging.ProgressLoggerFactory
 
@@ -17,18 +12,11 @@ import org.gradle.logging.ProgressLoggerFactory
  * Date: 19.12.2014
  */
 @Slf4j
-class FarmJettyRunTask extends ConventionTask {
+class FarmJettyRunTask extends BaseJettyTask {
 	Integer stopPort;
 	String stopKey;
 	boolean daemon;
 	Integer httpPort;
-	boolean reloadable;
-
-	JettyServer server;
-	protected Thread consoleScanner;
-
-	FileCollection buildscriptClasspath;
-	FileCollection jettyClasspath;
 
 	List<JettyWebAppContext> collectWebAppContexts() {
 		return collectWebAppContexts(project)
@@ -36,9 +24,9 @@ class FarmJettyRunTask extends ConventionTask {
 
 	List<JettyWebAppContext> collectWebAppContexts(Project prj) {
 		List<JettyWebAppContext> result = new ArrayList<>();
-		prj.childProjects.each {String name, Project p ->
+		prj.childProjects.each { String name, Project p ->
 			result.addAll(collectWebAppContexts(p))
-			if (p.plugins.hasPlugin(WarPlugin) && p.plugins.hasPlugin(JettyPlugin))  {
+			if (p.plugins.hasPlugin(WarPlugin) && p.plugins.hasPlugin(JettyPlugin)) {
 				JettyRunTask jettyRunTask = p.tasks.jettyRun;
 				jettyRunTask.validateConfiguration();
 				jettyRunTask.configureWebApplication();
@@ -48,41 +36,15 @@ class FarmJettyRunTask extends ConventionTask {
 		return result;
 	}
 
-	@TaskAction
-	void start() {
-		logger.info("Configuring Jetty for " + getProject());
-		ClassLoader originClassLoader = getClass().classLoader;
-		URLClassLoader jettyClassLoader = createJettyClassLoader();
+	@Override
+	protected void validateConfiguration() {
 
-		try {
-			Thread.currentThread().contextClassLoader = jettyClassLoader;
-			List<JettyWebAppContext> contexts = collectWebAppContexts();
-			startJettyInternal(contexts);
-		}
-		finally {
-			Thread.currentThread().contextClassLoader = originClassLoader;
-		}
 	}
 
-	URLClassLoader createJettyClassLoader() {
-		ClassLoader rootClassLoader = new AntClassLoader(getClass().classLoader, false);
-		URLClassLoader pluginClassLoader = new URLClassLoader(toURLArray(getBuildscriptClasspath().files), rootClassLoader);
-		new URLClassLoader(toURLArray(getJettyClasspath().files), pluginClassLoader);
-	}
-
-	private URL[] toURLArray(Collection<File> files) {
-		List<URL> urls = new ArrayList<URL>(files.size())
-
-		for (File file : files) {
-			try {
-				urls.add(file.toURI().toURL())
-			}
-			catch (MalformedURLException e) {
-				throw new UncheckedIOException(e)
-			}
-		}
-
-		urls.toArray(new URL[urls.size()]);
+	@Override
+	protected void startJettyInternal() {
+		List<JettyWebAppContext> contexts = collectWebAppContexts();
+		startJettyInternal(contexts);
 	}
 
 	void startJettyInternal(List<JettyWebAppContext> contexts) {
@@ -99,7 +61,8 @@ class FarmJettyRunTask extends ConventionTask {
 
 			//set up the webapp and any context provided
 			server.configureHandlers();
-			contexts.each {x-> server.addWebApplication(x)}
+
+			contexts.each { x -> server.addWebApplication(x) }
 
 			//do any other configuration required by the
 			//particular Jetty version
@@ -123,7 +86,7 @@ class FarmJettyRunTask extends ConventionTask {
 			progressLogger.completed();
 		}
 		def contextPaths = '';
-		contexts.each {x->contextPaths+ ' ' + x.getContextPath()}
+		contexts.each { x -> contextPaths + ' ' + x.getContextPath() }
 		progressLogger = progressLoggerFactory.newOperation(this.getClass());
 		progressLogger.setDescription(String.format("Run Jetty at http://localhost:%d/%s", getHttpPort(), contextPaths));
 		progressLogger.setShortDescription(String.format("Running at http://localhost:%d/%s", getHttpPort(), contextPaths));
@@ -136,33 +99,6 @@ class FarmJettyRunTask extends ConventionTask {
 		} finally {
 			progressLogger.completed();
 		}
-	}
-
-	def createServer() {
-		JettyFactory.instance.jettyServer
-	}
-
-	/**
-	 * Run a thread that monitors the console input to detect ENTER hits.
-	 */
-	void startConsoleScanner() throws Exception {
-		if (reloadable) {
-			log.info('Console reloading is ENABLED. Hit ENTER on the console to restart the context.');
-			consoleScanner = new ConsoleScanner(this);
-			consoleScanner.start();
-		}
-	}
-
-	void restartWebApp(boolean reconfigureScanner) {
-		log.info 'Restart jetty';
-
-		log.info 'Stopping jetty....';
-		webAppConfig.stop();
-		log.info 'Jetty stopped';
-		validateConfiguration();
-		log.info 'Starting jetty....';
-
-		webAppConfig.start();
 	}
 
 }

@@ -12,7 +12,7 @@ class JettyRunWarTask extends AbstractJettyTask {
 	@InputFile File webApp
 
 	@Override
-	void validateConfiguration() {
+	protected void validateConfiguration() {
 		if (!getWebApp() || !getWebApp().exists()) {
 			throw new InvalidUserDataException("Web application WAR ${getWebApp() == null ? 'null' : getWebApp().canonicalPath} does not exist")
 		} else {
