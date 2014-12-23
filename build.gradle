@@ -11,7 +11,7 @@ repositories {
 }
 
 group = 'org.gradle.plugin'
-version = '1.4.27-SNAPSHOT'
+version = '1.4.28-SNAPSHOT'
 
 
 compileGroovy.groovyOptions.configurationScript = file('groovycompilerconfig.groovy')

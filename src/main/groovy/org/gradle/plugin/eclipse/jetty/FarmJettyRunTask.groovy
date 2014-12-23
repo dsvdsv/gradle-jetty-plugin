@@ -70,7 +70,10 @@ class FarmJettyRunTask extends BaseJettyTask {
 			server.start();
 
 			if (isDaemon()) {
+				log.info('Daemon is ENABLED');
 				return;
+			} else {
+				log.info('Daemon is DISABLED');
 			}
 
 			// start the new line scanner thread if necessary
