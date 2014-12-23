@@ -3,7 +3,6 @@ package org.gradle.plugin.eclipse.jetty
 import groovy.util.logging.Slf4j
 import org.gradle.api.GradleException
 import org.gradle.api.Project
-import org.gradle.api.plugins.WarPlugin
 import org.gradle.logging.ProgressLogger
 import org.gradle.logging.ProgressLoggerFactory
 
@@ -18,22 +17,19 @@ class FarmJettyRunTask extends BaseJettyTask {
 	boolean daemon;
 	Integer httpPort;
 
-	List<JettyWebAppContext> collectWebAppContexts() {
-		return collectWebAppContexts(project)
-	}
-
-	List<JettyWebAppContext> collectWebAppContexts(Project prj) {
+	Collection<JettyWebAppContext> collectWebAppContexts() {
 		List<JettyWebAppContext> result = new ArrayList<>();
-		prj.childProjects.each { String name, Project p ->
-			result.addAll(collectWebAppContexts(p))
-			if (p.plugins.hasPlugin(WarPlugin) && p.plugins.hasPlugin(JettyPlugin)) {
-				JettyRunTask jettyRunTask = p.tasks.jettyRun;
-				jettyRunTask.validateConfiguration();
-				jettyRunTask.configureWebApplication();
-				result.add(jettyRunTask.webAppConfig)
-			}
+		Utils.projects(project).each {
+			Project p ->
+				if (Utils.isWebApp(p) && p.plugins.hasPlugin(JettyPlugin)) {
+					JettyRunTask jettyRunTask = p.tasks.jettyRun;
+					jettyRunTask.validateConfiguration();
+					jettyRunTask.configureWebApplication();
+					result.add(jettyRunTask.webAppConfig)
+				}
 		}
 		return result;
+
 	}
 
 	@Override
