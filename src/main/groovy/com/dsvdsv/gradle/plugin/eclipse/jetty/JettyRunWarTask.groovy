@@ -1,4 +1,4 @@
-package org.gradle.plugin.eclipse.jetty
+package com.dsvdsv.gradle.plugin.eclipse.jetty
 
 import org.gradle.api.InvalidUserDataException
 import org.gradle.api.tasks.InputFile
@@ -23,7 +23,7 @@ class JettyRunWarTask extends AbstractJettyTask {
 
 	@Override
 	public void configureWebApplication() throws Exception {
-		super.configureWebApplication();
+		Object.configureWebApplication();
 		webAppConfig.setWar(getWebApp().canonicalPath);
 	}
 }

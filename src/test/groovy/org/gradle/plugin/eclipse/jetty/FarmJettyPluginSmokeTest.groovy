@@ -1,5 +1,8 @@
 package org.gradle.plugin.eclipse.jetty
 
+import com.dsvdsv.gradle.plugin.eclipse.jetty.FarmJettyRunTask
+import com.dsvdsv.gradle.plugin.eclipse.jetty.JettyPlugin
+import com.dsvdsv.gradle.plugin.eclipse.jetty.JettyPluginConvention
 import org.gradle.api.Project
 import org.gradle.api.plugins.WarPlugin
 import org.gradle.plugin.test.TestFile

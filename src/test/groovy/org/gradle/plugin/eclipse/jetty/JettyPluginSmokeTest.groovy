@@ -1,12 +1,12 @@
 package org.gradle.plugin.eclipse.jetty
 
+import com.dsvdsv.gradle.plugin.eclipse.jetty.JettyPlugin
+import com.dsvdsv.gradle.plugin.eclipse.jetty.JettyPluginConvention
 import org.gradle.api.Project
 import org.gradle.api.plugins.WarPlugin
 import org.gradle.plugin.test.TestUtil
 import org.testng.Assert
-import org.testng.annotations.BeforeClass
 import org.testng.annotations.BeforeMethod
-import org.testng.annotations.BeforeTest
 import org.testng.annotations.Test
 
 

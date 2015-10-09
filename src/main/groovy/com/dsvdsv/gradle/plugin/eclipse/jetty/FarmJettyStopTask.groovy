@@ -1,8 +1,6 @@
-package org.gradle.plugin.eclipse.jetty
+package com.dsvdsv.gradle.plugin.eclipse.jetty
 
 import groovy.util.logging.Slf4j
-import org.gradle.api.internal.ConventionTask
-import org.gradle.api.tasks.TaskAction
 
 /**
  * User: Dikansky

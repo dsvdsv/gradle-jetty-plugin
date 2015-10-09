@@ -1,4 +1,4 @@
-package org.gradle.plugin.eclipse.jetty
+package com.dsvdsv.gradle.plugin.eclipse.jetty
 
 import org.eclipse.jetty.server.ShutdownMonitor
 

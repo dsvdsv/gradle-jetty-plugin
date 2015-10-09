@@ -1,4 +1,4 @@
-package org.gradle.plugin.eclipse.jetty
+package com.dsvdsv.gradle.plugin.eclipse.jetty
 /**
  * User: Dikansky
  * Date: 21.10.13

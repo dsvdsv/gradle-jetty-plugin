@@ -1,4 +1,4 @@
-package org.gradle.plugin.eclipse.jetty
+package com.dsvdsv.gradle.plugin.eclipse.jetty
 
 import org.eclipse.jetty.util.resource.Resource
 import org.gradle.api.InvalidUserDataException
@@ -34,7 +34,7 @@ class JettyRunTask extends AbstractJettyTask {
 	}
 
 	public void configureWebApplication() throws Exception {
-		super.configureWebApplication();
+		Object.configureWebApplication();
 		Resource webAppSourceDirectoryResource = Resource.newResource(getWebAppSourceDirectory().getCanonicalPath());
 		if (getWebAppConfig().getWar() == null) {
 			getWebAppConfig().setWar(webAppSourceDirectoryResource.toString());
