@@ -22,7 +22,7 @@ repositories {
 }
 
 group = 'com.dsvdsv.gradle.plugin'
-version = '1.6-SNAPSHOT'
+version = '1.5.1'
 
 
 compileGroovy.groovyOptions.configurationScript = file('groovycompilerconfig.groovy')
