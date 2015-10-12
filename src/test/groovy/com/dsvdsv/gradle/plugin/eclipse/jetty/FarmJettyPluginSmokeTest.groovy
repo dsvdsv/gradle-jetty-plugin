@@ -1,13 +1,10 @@
-package org.gradle.plugin.eclipse.jetty
+package com.dsvdsv.gradle.plugin.eclipse.jetty
 
-import com.dsvdsv.gradle.plugin.eclipse.jetty.FarmJettyRunTask
-import com.dsvdsv.gradle.plugin.eclipse.jetty.JettyPlugin
-import com.dsvdsv.gradle.plugin.eclipse.jetty.JettyPluginConvention
 import org.gradle.api.Project
 import org.gradle.api.plugins.WarPlugin
-import org.gradle.plugin.test.TestFile
-import org.gradle.plugin.test.TestNameTestDirectoryProvider
-import org.gradle.plugin.test.TestUtil
+import com.dsvdsv.gradle.plugin.test.TestFile
+import com.dsvdsv.gradle.plugin.test.TestNameTestDirectoryProvider
+import com.dsvdsv.gradle.plugin.test.TestUtil
 import org.testng.Assert
 import org.testng.annotations.BeforeMethod
 import org.testng.annotations.Test

@@ -1,4 +1,4 @@
-package org.gradle.plugin.test
+package com.dsvdsv.gradle.plugin.test
 
 import org.apache.ivy.core.module.descriptor.Configuration
 import org.apache.ivy.core.module.descriptor.DefaultModuleDescriptor

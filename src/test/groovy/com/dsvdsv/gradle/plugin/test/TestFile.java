@@ -1,4 +1,4 @@
-package org.gradle.plugin.test;
+package com.dsvdsv.gradle.plugin.test;
 
 import groovy.lang.Closure;
 import org.apache.commons.io.FileUtils;

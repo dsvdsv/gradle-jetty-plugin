@@ -1,4 +1,4 @@
-package org.gradle.plugin.test
+package com.dsvdsv.gradle.plugin.test
 
 /**
  * User: Dikansky

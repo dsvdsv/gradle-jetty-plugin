@@ -1,4 +1,4 @@
-package org.gradle.plugin.test
+package com.dsvdsv.gradle.plugin.test
 
 import org.apache.commons.io.FileUtils
 import org.apache.commons.lang.StringUtils
