@@ -23,7 +23,7 @@ class JettyRunWarTask extends AbstractJettyTask {
 
 	@Override
 	public void configureWebApplication() throws Exception {
-		Object.configureWebApplication();
+		super.configureWebApplication();
 		webAppConfig.setWar(getWebApp().canonicalPath);
 	}
 }

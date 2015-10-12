@@ -34,7 +34,7 @@ class JettyRunTask extends AbstractJettyTask {
 	}
 
 	public void configureWebApplication() throws Exception {
-		Object.configureWebApplication();
+		super.configureWebApplication();
 		Resource webAppSourceDirectoryResource = Resource.newResource(getWebAppSourceDirectory().getCanonicalPath());
 		if (getWebAppConfig().getWar() == null) {
 			getWebAppConfig().setWar(webAppSourceDirectoryResource.toString());
